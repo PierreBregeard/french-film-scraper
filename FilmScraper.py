@@ -21,23 +21,49 @@ class FilmScraper:
             yield self.get_soup(url)
     
     def get_film_map(self, searchs_soup):
-        film_map = {}
+        film_arr = []
+        max_film_text_length = 0
 
         for search_soup in searchs_soup :
-            for title in search_soup.select(".wa-sub-block-title a"):
+            for film_block in search_soup.select(".wa-sub-block"):
+
+                title = film_block.select_one(".wa-sub-block-title > a")
+                # removing langage in the title
                 title_text = title.get_text().split("[", 1)[0].strip()
-                if not film_map.get(title_text):
-                    film_map[title_text] = title["href"]
+
+                max_film_text_length = max(len(title_text), max_film_text_length)
+                
+                description_block = film_block.select_one("div:nth-child(2) > div:nth-child(2) > div:nth-child(4) > ul:nth-child(1)")
+                year = description_block.select_one("li:nth-child(4) > b:nth-child(2) > a:nth-child(1)").get_text()
+                real = description_block.select_one("li:nth-child(2) > b:nth-child(2) > a:nth-child(1)").get_text()
+
+                film_arr.append({
+                    "title": title_text,
+                    "desc" : f"{year} {real}",
+                    "id"   : title["href"]
+                })
+
+
+        film_map = {}
+        for film in film_arr:
+            # if not in the map
+            if not film_map.get(title_text):
+                name = film["title"].ljust(max_film_text_length, " ")
+                name += " - " + film["desc"]
+                film_map[name] = film["id"]
             
         return film_map
 
     def get_film_resolutions_map(self, film_soup, current_film_id):
 
-        def add_recommended(res):
-            res = res.strip()
-            if "HDLIGHT 1080p" in res:
-                res += " (recommended)"
-            return res
+        max_res_length = [0] # using a array to be modified in f below
+
+        def split_lang(restxt):
+            res, lang = restxt.split("(", 1)
+            res.strip()
+            max_res_length[0] = max(len(res), max_res_length[0])
+            return res, lang.replace("(", "").replace(")", "").strip()
+
 
         def format_resolution(res):
             res = res.replace("[", "").replace("]", "")
@@ -47,30 +73,56 @@ class FilmScraper:
             return res
 
         current_res = film_soup.select_one("div.wa-sub-block:nth-child(3) > div:nth-child(1) > i:nth-child(2)").get_text()
-        current_res = add_recommended(format_resolution(current_res))
 
-        resolutions_map = {
-            current_res: current_film_id
-        }
+        resolutions_arr = [{
+            "restitle": split_lang(format_resolution(current_res)),
+            "id"      : current_film_id
+        }]
 
         ul = film_soup.select_one(".wa-post-list-ofLinks")
-        for anchor in ul.select("li > a"): # test this
-            res = add_recommended(anchor.get_text())
-            resolutions_map[res] = anchor["href"]
+        for anchor in ul.select("li > a"):
+            res = anchor.get_text()
+            resolutions_arr.append({
+                "restitle": split_lang(res),
+                "id"      : anchor["href"]
+            })
+
+        resolutions_map = {}
+        for resolution in resolutions_arr:
+            res, lang = resolution["restitle"]
+            name = res.ljust(max_res_length[0] + 1, " ")
+            name += "- " + lang
+            if "HDLIGHT 1080p" in name:
+                name += " (recommended)"
+            resolutions_map[name] = resolution["id"]
 
         return resolutions_map
     
     def get_film_dl_map(self, film_soup):
 
-        film_downloads_map = {}
+        film_downloads_arr = []
+        max_length_name = 0
 
         for tr in film_soup.select("#DDLLinks > tbody:nth-child(1) > tr"):
             name = tr.select_one("td:nth-child(2)").get_text()
             if name == "Anonyme":
                 continue
-            if name == "1fichier":
+            max_length_name = max(max_length_name, len(name))
+
+            film_downloads_arr.append({
+                "name": name,
+                "size": tr.select_one("td:nth-child(3)").get_text(),
+                "href": tr.select_one("a")["href"]
+            })
+
+        film_downloads_map = {}
+
+        for film_dl in film_downloads_arr:
+            name = film_dl["name"].ljust(max_length_name, " ")
+            name += f" - {film_dl['size']}"
+            if "1fichier" in name:
                 name += " (recommended)"
-            film_downloads_map[name] = tr.select_one("a")["href"]
+            film_downloads_map[name] = film_dl["href"]
 
         return film_downloads_map
     
