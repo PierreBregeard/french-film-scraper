@@ -1,14 +1,20 @@
 from FilmScraper import FilmScraper
-from simple_term_menu import TerminalMenu
 from requests.exceptions import ConnectionError
 from os import get_terminal_size
+from rich.console import Console
 import webbrowser
+from textwrap import wrap
+from beaupy import select
+from beaupy.spinners import Spinner, DOTS
 
 class FilmScraperUI:
 
     film_id = ""
 
     def __init__(self):
+
+        self.console = Console()
+
         try:
             self.fs = FilmScraper()
         except ConnectionError:
@@ -23,28 +29,14 @@ class FilmScraperUI:
         print()
 
     def center_text(self, text):
+        padding = 1/8
         terminal_width = get_terminal_size().columns
-        min_padding = terminal_width // 8
+        available_width = int((1 - padding * 2) * terminal_width)
+        text_lines = wrap(text, available_width)
 
-        if len(text) > terminal_width - 2 * min_padding:
-            lines = text.split()
-            new_lines = []
-            current_line = ""
-            for word in lines:
-                if len(current_line) + len(word) + 1 > terminal_width - 2 * min_padding:
-                    new_lines.append(current_line)
-                    current_line = word + " "
-                else:
-                    current_line += word + " "
-            new_lines.append(current_line.strip())
-
-            for line in new_lines:
-                padding = min_padding + (terminal_width - 2 * min_padding - len(line)) // 2
-                print(" " * padding + line)
-        else:
-            padding = min_padding + (terminal_width - 2 * min_padding - len(text)) // 2
-            print(" " * padding + text)
-
+        for line in text_lines:
+            left_padding = (terminal_width - len(line)) // 2
+            print(f"{' ' * left_padding}{line}")
 
     def print_seperator(self):
         print(get_terminal_size().columns * "-")
@@ -58,12 +50,10 @@ class FilmScraperUI:
         map_options = list(map.keys())
         map_options.sort(key=lambda o: not "recommandé" in o.lower())
         if additional_map:
-            if (len(map_options) != 0):
-                map_options += [None]
             map_options += list(additional_map.keys())
             map = {**map, **additional_map}
-        i = TerminalMenu(map_options).show()
-        key = map_options[i]
+
+        key = select(map_options, cursor=">", cursor_style="red")
         # remove spaces
         return " ".join(key.split()), map[key]
     
@@ -80,7 +70,10 @@ class FilmScraperUI:
                 search_urls.append(self.fs.add_search_to_url(search, page_index=search_i))
                 search_i += 1
             
+            spinner = Spinner(DOTS, "")
+            spinner.start()
             searchs_soup += self.fs.get_soups(search_urls)
+            spinner.stop()
             film_map = self.fs.get_film_map(searchs_soup)
             
             additionnal_map= {}
@@ -103,7 +96,11 @@ class FilmScraperUI:
             search_range += 3
 
         film_url = self.fs.add_film_id_to_url(self.film_id)
-        return self.fs.get_soup(film_url)
+
+        spinner.start()
+        film_soup = self.fs.get_soup(film_url)
+        spinner.stop()
+        return film_soup
 
     def select_resolution(self, film_soup):
         film_res_map = self.fs.get_film_resolutions_map(film_soup, self.film_id)
@@ -113,7 +110,10 @@ class FilmScraperUI:
         if film_res_id != self.film_id:
             self.film_id = film_res_id
             film_url = self.fs.add_film_id_to_url(self.film_id)
+            spinner = Spinner(DOTS, "")
+            spinner.start()
             film_soup = self.fs.get_soup(film_url)
+            spinner.stop()
         
         return film_soup
 
@@ -129,7 +129,7 @@ class FilmScraperUI:
         film_dl_link = self.select_dl(film_soup)
         webbrowser.open(film_dl_link)
         print("Redirection sur :")
-        print(film_dl_link)
+        self.console.print(film_dl_link)
         input("\nAppuyez sur n'importe quelle touche pour arrêter le programme")
 
 if __name__ == "__main__":

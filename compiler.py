@@ -11,7 +11,7 @@ if __name__ == "__main__":
     os.system(
         f"pyinstaller --clean --onefile --name {name} main.py"
     )
-    exe_folder = root_path / Path("dist/{name}.exe")
+    exe_folder = root_path / Path(f"dist/{name}.exe")
     print(f"Built in {exe_folder}")
 
     rmtree("build", ignore_errors=True)
