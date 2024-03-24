@@ -12,23 +12,26 @@ class FilmScraperUI:
         try:
             self.fs = FilmScraper()
         except ConnectionError:
-            print("Connection error: Unable to establish a connection to the server")
+            print("Erreur de connexion : impossible d'établir une connexion au serveur")
             exit(1)
 
         self.print_seperator()
-        self.center_text("Under French law, you are authorized to download a file only if you possess the original copy of the desired film. Neither this software, nor the hosts, nor anyone else can be held responsible for misuse of this software.")
+        self.center_text("Conformément à la législation française, le téléchargement d'un fichier est autorisé uniquement si vous possédez l'original du film convoité. Il est important de noter que ni le présent logiciel, ni les hébergeurs, ni aucune autre partie ne sauraient être tenus pour responsables d'une utilisation inappropriée ou illégale de ce logiciel.")
+        print()
         self.center_text("© 2024 - πR")
         self.print_seperator()
         print()
 
     def center_text(self, text):
         terminal_width = get_terminal_size().columns
-        if len(text) > terminal_width:
+        min_padding = terminal_width // 8
+
+        if len(text) > terminal_width - 2 * min_padding:
             lines = text.split()
             new_lines = []
             current_line = ""
             for word in lines:
-                if len(current_line) + len(word) + 1 > terminal_width:
+                if len(current_line) + len(word) + 1 > terminal_width - 2 * min_padding:
                     new_lines.append(current_line)
                     current_line = word + " "
                 else:
@@ -36,11 +39,12 @@ class FilmScraperUI:
             new_lines.append(current_line.strip())
 
             for line in new_lines:
-                padding = (terminal_width - len(line)) // 2
+                padding = min_padding + (terminal_width - 2 * min_padding - len(line)) // 2
                 print(" " * padding + line)
         else:
-            padding = (terminal_width - len(text)) // 2
+            padding = min_padding + (terminal_width - 2 * min_padding - len(text)) // 2
             print(" " * padding + text)
+
 
     def print_seperator(self):
         print(get_terminal_size().columns * "-")
@@ -52,7 +56,7 @@ class FilmScraperUI:
 
     def select_item(self, map, additional_map = None):
         map_options = list(map.keys())
-        map_options.sort(key=lambda o: not "recommended" in o.lower())
+        map_options.sort(key=lambda o: not "recommandé" in o.lower())
         if additional_map:
             if (len(map_options) != 0):
                 map_options += [None]
@@ -68,7 +72,7 @@ class FilmScraperUI:
         search_i = 0
         searchs_soup = []
 
-        search_text_input = "search : "
+        search_text_input = "film recherché : "
         search = input(search_text_input)
         while True:
             search_urls = []
@@ -81,9 +85,9 @@ class FilmScraperUI:
             
             additionnal_map= {}
             if search_range < 5:
-                additionnal_map["fetch more"] = "more"
-            additionnal_map["new research"] = "search"
-            additionnal_map["exit"] = "exit"
+                additionnal_map["recherche approfondie"] = "more"
+            additionnal_map["nouvelle recherche"] = "search"
+            additionnal_map["quitter"] = "exit"
             menu_text, menu_res = self.select_item(film_map, additionnal_map)
 
             if menu_res == "exit":
@@ -124,9 +128,9 @@ class FilmScraperUI:
         film_soup = self.select_resolution(film_soup)
         film_dl_link = self.select_dl(film_soup)
         webbrowser.open(film_dl_link)
-        print("Redirected to :")
+        print("Redirection sur :")
         print(film_dl_link)
-        input("\nPress any key to close the program")
+        input("\nAppuyez sur n'importe quelle touche pour arrêter le programme")
 
 if __name__ == "__main__":
     fsUI = FilmScraperUI()

@@ -93,7 +93,7 @@ class FilmScraper:
             name = res.ljust(max_res_length[0] + 1, " ")
             name += "- " + lang
             if "HDLIGHT 1080p" in name:
-                name += " (recommended)"
+                name += " (recommandé)"
             resolutions_map[name] = resolution["id"]
 
         return resolutions_map
@@ -121,7 +121,7 @@ class FilmScraper:
             name = film_dl["name"].ljust(max_length_name, " ")
             name += f" - {film_dl['size']}"
             if "1fichier" in name:
-                name += " (recommended)"
+                name += " (recommandé)"
             film_downloads_map[name] = film_dl["href"]
 
         return film_downloads_map
