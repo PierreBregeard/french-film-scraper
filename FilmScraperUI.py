@@ -1,6 +1,7 @@
 from FilmScraper import FilmScraper
 from simple_term_menu import TerminalMenu
 from requests.exceptions import ConnectionError
+from os import get_terminal_size
 import webbrowser
 
 class FilmScraperUI:
@@ -14,14 +15,49 @@ class FilmScraperUI:
             print("Connection error: Unable to establish a connection to the server")
             exit(1)
 
+        self.print_seperator()
+        self.center_text("Under French law, you are authorized to download a file only if you possess the original copy of the desired film. Neither this software, nor the hosts, nor anyone else can be held responsible for misuse of this software.")
+        self.center_text("© 2024 - πR")
+        self.print_seperator()
+        print()
+
+    def center_text(self, text):
+        terminal_width = get_terminal_size().columns
+        if len(text) > terminal_width:
+            lines = text.split()
+            new_lines = []
+            current_line = ""
+            for word in lines:
+                if len(current_line) + len(word) + 1 > terminal_width:
+                    new_lines.append(current_line)
+                    current_line = word + " "
+                else:
+                    current_line += word + " "
+            new_lines.append(current_line.strip())
+
+            for line in new_lines:
+                padding = (terminal_width - len(line)) // 2
+                print(" " * padding + line)
+        else:
+            padding = (terminal_width - len(text)) // 2
+            print(" " * padding + text)
+
+    def print_seperator(self):
+        print(get_terminal_size().columns * "-")
+
     def replace_last_line(self, new_line = None):
-        print(f"\033[A{10 * ' '}\033[A")
+        print(f"\033[A{get_terminal_size().columns * ' '}\033[A")
         if new_line:
             print(new_line)
 
-    def select_item(self, map):
+    def select_item(self, map, additional_map = None):
         map_options = list(map.keys())
         map_options.sort(key=lambda o: not "recommended" in o.lower())
+        if additional_map:
+            if (len(map_options) != 0):
+                map_options += [None]
+            map_options += list(additional_map.keys())
+            map = {**map, **additional_map}
         i = TerminalMenu(map_options).show()
         key = map_options[i]
         # remove spaces
@@ -43,13 +79,21 @@ class FilmScraperUI:
             searchs_soup += self.fs.get_soups(search_urls)
             film_map = self.fs.get_film_map(searchs_soup)
             
+            additionnal_map= {}
             if search_range < 5:
-                film_map["fetch more.."] = None
+                additionnal_map["fetch more"] = "more"
+            additionnal_map["new research"] = "search"
+            additionnal_map["exit"] = "exit"
+            menu_text, menu_res = self.select_item(film_map, additionnal_map)
 
-            film_text, self.film_id = self.select_item(film_map)
-
-            if self.film_id:
-                self.replace_last_line(search_text_input + film_text)
+            if menu_res == "exit":
+                exit(0)
+            if menu_res == "search":
+                self.replace_last_line()
+                return self.select_film()
+            if menu_res != "more":
+                self.film_id = menu_res
+                self.replace_last_line(search_text_input + menu_text)
                 break
 
             search_range += 3
