@@ -1,11 +1,14 @@
-from FilmScraper import FilmScraper
+import webbrowser
 from requests.exceptions import ConnectionError
 from os import get_terminal_size
-from rich.console import Console
-import webbrowser
 from textwrap import wrap
-from beaupy import select
-from beaupy.spinners import Spinner, DOTS
+from halo import Halo
+from InquirerPy import inquirer
+from InquirerPy.base.control import Choice
+from InquirerPy.separator import Separator
+from termcolor import cprint
+
+from FilmScraper import FilmScraper
 
 class FilmScraperUI:
 
@@ -13,8 +16,7 @@ class FilmScraperUI:
 
     def __init__(self):
 
-        self.console = Console()
-        self.spinner = [Spinner(DOTS, ""), False]
+        self.spinner = [Halo(spinner="dots"), False]
 
         try:
             self.fs = FilmScraper()
@@ -23,14 +25,16 @@ class FilmScraperUI:
             exit(1)
 
         self.print_seperator()
+        print()
         self.center_text("Conformément à la législation française, le téléchargement d'un fichier est autorisé uniquement si vous possédez l'original du film convoité. Il est important de noter que ni le présent logiciel, ni les hébergeurs, ni aucune autre partie ne sauraient être tenus pour responsables d'une utilisation inappropriée ou illégale de ce logiciel.")
         print()
         self.center_text("© 2024 - πR")
+        print()
         self.print_seperator()
         print()
 
     def center_text(self, text):
-        padding = 1/8
+        padding = 1/10
         terminal_width = get_terminal_size().columns
         available_width = int((1 - padding * 2) * terminal_width)
         text_lines = wrap(text, available_width)
@@ -42,10 +46,11 @@ class FilmScraperUI:
     def print_seperator(self):
         print(get_terminal_size().columns * "-")
 
-    def replace_last_line(self, new_line = None):
+    def clear_upper_line(self, nb_lines = 1):
         print(f"\033[A{get_terminal_size().columns * ' '}\033[A")
-        if new_line:
-            print(new_line)
+        if nb_lines == 1:
+            return
+        return self.clear_upper_line(nb_lines - 1)
 
     def toogle_spinner(self):
         if self.spinner[1]:
@@ -54,43 +59,55 @@ class FilmScraperUI:
             self.spinner[0].start()
         self.spinner[1] = not self.spinner[1]
 
-    def select_item(self, map, additional_map = None):
-        map_options = list(map.keys())
+    def ask_question(self, q):
+        return inquirer.text(message=q).execute()
 
-        max_txt_length_opt = 0
-        for opt in map_options:
-            opt_split = opt.split("|~|", 1)
-            if len(opt_split) == 1:
-                max_txt_length_opt = 0
-                break
-            max_txt_length_opt = max(len(opt_split[0]), max_txt_length_opt)
+    def format_map(self, map):
+        values = list(map.values())
+        if len(values) == 0:
+            return None
+        titles = [v["title"][0] for v in values]
+        max_length = len(max(titles, key=len))
+        new_map = {}
+        for key, val in map.items():
+            name = val["title"][0].ljust(max_length, " ")
+            name += " - " + val["title"][1]
+            if val.get("isRecommanded"):
+                name += " (recommandé)"
+            new_map[key] = name
+        return new_map
 
-        map_options_formatted = map_options.copy()
-        if max_txt_length_opt != 0:
-            for i, opt in enumerate(map_options_formatted):
-                opt_split = opt.split("|~|", 1)
-                opt = opt_split[0].ljust(max_txt_length_opt, " ")
-                opt += " - " + opt_split[1]
-                map_options_formatted[i] = opt
+    def select_item(self, map, message, additional_map = None):
 
-        map_options_formatted.sort(key=lambda o: not "recommandé" in o.lower())
+        def format_res(res):
+            # remove long spaces
+            res = " ".join(res.split())
+            return res.replace("(recommandé)", "")
+
+        formatted_map = self.format_map(map)
+        choices = []
+        if formatted_map:
+            choices = [Choice(value=k, name=v) for k, v in formatted_map.items()]
+            choices = sorted(choices, key=lambda choice: not "(recommandé)" in choice.name.lower())
         if additional_map:
-            additional_arr = list(additional_map.keys())
-            map_options_formatted += additional_arr
-            map_options += additional_arr
-            map = {**map, **additional_map}
+            choices += [
+                Separator(),
+                *[Choice(v, k) for k, v in additional_map.items()] 
+                ]
+        key = inquirer.select(
+            message=message,
+            choices=choices,
+            transformer=format_res
+        ).execute()
 
-        i = select(map_options_formatted, return_index=True, cursor_style="red")
-        key = map_options[i]
-        return key.replace("|~|", " - ").replace("(recommandé)", ""), map[key]
+        return key
     
     def select_film(self):
         search_range = 2
         search_i = 0
         searchs_soup = []
 
-        search_text_input = "film recherché : "
-        search = input(search_text_input)
+        search = self.ask_question("Entrer le nom du film :")
         while True:
             search_urls = []
             while search_i < search_range:
@@ -104,21 +121,23 @@ class FilmScraperUI:
             
             additionnal_map= {}
             if search_range < 5:
-                additionnal_map["recherche approfondie"] = "more"
-            additionnal_map["nouvelle recherche"] = "search"
-            additionnal_map["quitter"] = "exit"
-            menu_text, menu_res = self.select_item(film_map, additionnal_map)
+                additionnal_map["Recherche approfondie"] = "more"
+            additionnal_map["Nouvelle recherche"] = "search"
+            additionnal_map["Quitter"] = "exit"
+            menu_res = self.select_item(film_map, "Sélectionner votre film :", additionnal_map)
 
             if menu_res == "exit":
                 exit(0)
+
             if menu_res == "search":
-                self.replace_last_line()
+                self.clear_upper_line(nb_lines=2)
                 return self.select_film()
+            
             if menu_res != "more":
                 self.film_id = menu_res
-                self.replace_last_line(menu_text)
                 break
 
+            self.clear_upper_line()
             search_range += 3
 
         film_url = self.fs.add_film_id_to_url(self.film_id)
@@ -130,8 +149,7 @@ class FilmScraperUI:
 
     def select_resolution(self, film_soup):
         film_res_map = self.fs.get_film_resolutions_map(film_soup, self.film_id)
-        film_res_text, film_res_id = self.select_item(film_res_map)
-        print(film_res_text)
+        film_res_id = self.select_item(film_res_map, "Sélectionner la qualité :")
 
         if film_res_id != self.film_id:
             self.film_id = film_res_id
@@ -144,8 +162,7 @@ class FilmScraperUI:
 
     def select_dl(self, film_soup):
         film_dl_map = self.fs.get_film_dl_map(film_soup)
-        film_dl_text, film_dl_link  = self.select_item(film_dl_map)
-        print(film_dl_text)
+        film_dl_link  = self.select_item(film_dl_map, "Sélectionner l'hébergeur :")
         return film_dl_link
 
     def show(self):
@@ -153,8 +170,8 @@ class FilmScraperUI:
         film_soup = self.select_resolution(film_soup)
         film_dl_link = self.select_dl(film_soup)
         webbrowser.open(film_dl_link)
-        print("Redirection sur :")
-        self.console.print(film_dl_link)
+        print("\nRedirection sur :")
+        cprint(film_dl_link, "light_blue", attrs=["underline"])
         input("\nAppuyez sur n'importe quelle touche pour arrêter le programme")
 
 if __name__ == "__main__":
