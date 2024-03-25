@@ -14,6 +14,7 @@ class FilmScraperUI:
     def __init__(self):
 
         self.console = Console()
+        self.spinner = [Spinner(DOTS, ""), False]
 
         try:
             self.fs = FilmScraper()
@@ -46,16 +47,42 @@ class FilmScraperUI:
         if new_line:
             print(new_line)
 
+    def toogle_spinner(self):
+        if self.spinner[1]:
+            self.spinner[0].stop()
+        else:
+            self.spinner[0].start()
+        self.spinner[1] = not self.spinner[1]
+
     def select_item(self, map, additional_map = None):
         map_options = list(map.keys())
-        map_options.sort(key=lambda o: not "recommandé" in o.lower())
+
+        max_txt_length_opt = 0
+        for opt in map_options:
+            opt_split = opt.split("|~|", 1)
+            if len(opt_split) == 1:
+                max_txt_length_opt = 0
+                break
+            max_txt_length_opt = max(len(opt_split[0]), max_txt_length_opt)
+
+        map_options_formatted = map_options.copy()
+        if max_txt_length_opt != 0:
+            for i, opt in enumerate(map_options_formatted):
+                opt_split = opt.split("|~|", 1)
+                opt = opt_split[0].ljust(max_txt_length_opt, " ")
+                opt += " - " + opt_split[1]
+                map_options_formatted[i] = opt
+
+        map_options_formatted.sort(key=lambda o: not "recommandé" in o.lower())
         if additional_map:
-            map_options += list(additional_map.keys())
+            additional_arr = list(additional_map.keys())
+            map_options_formatted += additional_arr
+            map_options += additional_arr
             map = {**map, **additional_map}
 
-        key = select(map_options, cursor=">", cursor_style="red")
-        # remove spaces
-        return " ".join(key.split()), map[key]
+        i = select(map_options_formatted, return_index=True, cursor_style="red")
+        key = map_options[i]
+        return key.replace("|~|", " - ").replace("(recommandé)", ""), map[key]
     
     def select_film(self):
         search_range = 2
@@ -70,10 +97,9 @@ class FilmScraperUI:
                 search_urls.append(self.fs.add_search_to_url(search, page_index=search_i))
                 search_i += 1
             
-            spinner = Spinner(DOTS, "")
-            spinner.start()
+            self.toogle_spinner()
             searchs_soup += self.fs.get_soups(search_urls)
-            spinner.stop()
+            self.toogle_spinner()
             film_map = self.fs.get_film_map(searchs_soup)
             
             additionnal_map= {}
@@ -90,16 +116,16 @@ class FilmScraperUI:
                 return self.select_film()
             if menu_res != "more":
                 self.film_id = menu_res
-                self.replace_last_line(search_text_input + menu_text)
+                self.replace_last_line(menu_text)
                 break
 
             search_range += 3
 
         film_url = self.fs.add_film_id_to_url(self.film_id)
 
-        spinner.start()
+        self.toogle_spinner()
         film_soup = self.fs.get_soup(film_url)
-        spinner.stop()
+        self.toogle_spinner()
         return film_soup
 
     def select_resolution(self, film_soup):
@@ -110,10 +136,9 @@ class FilmScraperUI:
         if film_res_id != self.film_id:
             self.film_id = film_res_id
             film_url = self.fs.add_film_id_to_url(self.film_id)
-            spinner = Spinner(DOTS, "")
-            spinner.start()
+            self.toogle_spinner()
             film_soup = self.fs.get_soup(film_url)
-            spinner.stop()
+            self.toogle_spinner()
         
         return film_soup
 
