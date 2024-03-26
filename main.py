@@ -1,3 +1,3 @@
-from FilmScraperUI import FilmScraperUI
+from src.FilmScraperUI import FilmScraperUI
 
 FilmScraperUI().show()

@@ -8,7 +8,7 @@ from InquirerPy.base.control import Choice
 from InquirerPy.separator import Separator
 from termcolor import cprint
 
-from FilmScraper import FilmScraper
+from .FilmScraper import FilmScraper
 
 class FilmScraperUI:
 
@@ -95,9 +95,11 @@ class FilmScraperUI:
                 *[Choice(v, k) for k, v in additional_map.items()] 
                 ]
         key = inquirer.select(
+            pointer=">",
             message=message,
             choices=choices,
-            transformer=format_res
+            transformer=format_res,
+            border=True
         ).execute()
 
         return key

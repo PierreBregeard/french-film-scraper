@@ -8,11 +8,13 @@ if __name__ == "__main__":
 
     root_path = Path(__file__).parent
     os.chdir(root_path)
+    upx_dir_path = "UPX"
     os.system(
-        f"pyinstaller --clean --onefile --name {name} main.py"
+        f"python -m PyInstaller --noconfirm --icon fav.ico --clean --console --onefile --upx-dir {upx_dir_path} --name {name} main.py"
     )
     exe_folder = root_path / Path(f"dist/{name}.exe")
     print(f"Built in {exe_folder}")
 
     rmtree("build", ignore_errors=True)
-    os.remove("film-scraper.spec")
+    if os.path.isfile("film-scraper.spec"):
+        os.remove("film-scraper.spec")
