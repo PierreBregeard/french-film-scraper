@@ -4,15 +4,16 @@ from shutil import rmtree
 
 if __name__ == "__main__":
 
-    name = "film-scraper"
+    NAME = "film-scraper"
 
     root_path = Path(__file__).parent
     os.chdir(root_path)
-    upx_dir_path = "UPX"
+    # https://github.com/upx/upx/releases/tag/v4.2.3
+    UPX_DIR_PATH = "UPX"
     os.system(
-        f"python -m PyInstaller --noconfirm --icon fav.ico --clean --console --onefile --upx-dir {upx_dir_path} --name {name} main.py"
+        f"python -m PyInstaller --noconfirm --icon fav.ico --clean --console --onefile --upx-dir {UPX_DIR_PATH} --name {NAME} main.py"
     )
-    exe_folder = root_path / Path(f"dist/{name}.exe")
+    exe_folder = root_path / Path(f"dist/{NAME}.exe")
     print(f"Built in {exe_folder}")
 
     rmtree("build", ignore_errors=True)

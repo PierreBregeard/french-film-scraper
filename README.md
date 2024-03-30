@@ -11,4 +11,4 @@ Ce projet a pour objectif de faciliter le téléchargement de films sur le site 
 ⚠ La désactivation de l'antivirus peut être nécessaire
 
 * Sous windows : lancer l'exécutable suivant `./dist/film-scraper.exe`
-* Sous Linux : (à venir)
+* Sous Linux : `./dist/film-scraper`

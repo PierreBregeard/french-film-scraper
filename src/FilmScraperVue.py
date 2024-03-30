@@ -28,8 +28,7 @@ class FilmScraperVue:
 
         for line in text_lines:
             left_padding = (terminal_width - len(line)) // 2
-            print(f"{' ' * left_padding}{line}\n")
-        print()
+            print(f"{' ' * left_padding}{line}")
 
     def print_seperator(self):
         """Print a separtor made of '-' all across the screen."""
@@ -44,6 +43,7 @@ class FilmScraperVue:
         """Print app disclaimer."""
         self.print_seperator()
         self.center_text("Conformément à la législation française, le téléchargement d'un fichier est autorisé uniquement si vous possédez l'original du film convoité. Il est important de noter que ni le présent logiciel, ni les hébergeurs, ni aucune autre partie ne sauraient être tenus pour responsables d'une utilisation inappropriée ou illégale de ce logiciel.")
+        print()
         self.center_text("© 2024 - πR")
         self.print_seperator()
 
