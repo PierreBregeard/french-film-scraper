@@ -65,8 +65,8 @@ class FilmScraperApi:
                 # remove language in the title
                 title_str = title.get_text().split("[", 1)[0].strip()
 
-                if not title_str in duplicates:
-                    duplicates.append(title_str)
+                if not title_str.lower() in duplicates:
+                    duplicates.append(title_str.lower())
                 else:
                     continue
 
