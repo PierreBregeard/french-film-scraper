@@ -4,7 +4,7 @@ from shutil import rmtree
 
 if __name__ == "__main__":
 
-    # git filter-branch --tree-filter "rm -rf dist" HEAD
+    # git filter-branch -f --tree-filter "rm -rf dist" HEAD
     NAME = "film-scraper"
 
     root_path = Path(__file__).parent
