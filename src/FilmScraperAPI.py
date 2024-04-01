@@ -65,11 +65,6 @@ class FilmScraperApi:
                 # remove language in the title
                 title_str = title.get_text().split("[", 1)[0].strip()
 
-                if not title_str.lower() in duplicates:
-                    duplicates.append(title_str.lower())
-                else:
-                    continue
-
                 description_block = film_block.select_one(
                     "div:nth-child(2) > div:nth-child(2) > div:nth-child(4) > ul:nth-child(1)"
                 )
@@ -81,6 +76,12 @@ class FilmScraperApi:
                     "li:nth-child(2) > b:nth-child(2) > a:nth-child(1)"
                 )
                 assert year is not None and director is not None
+
+                film_key = title_str.lower() + year.get_text() + director.get_text().lower()
+                if not film_key in duplicates:
+                    duplicates.append(film_key)
+                else:
+                    continue
 
                 search_result = SearchResult(
                     self.__get_url_from_film_id(str(title["href"])),
