@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # https://github.com/upx/upx/releases/tag/v4.2.3
     UPX_DIR_PATH = "UPX"
     os.system(
-        f"python -m PyInstaller --noconfirm --icon fav.ico --clean --console --onefile --upx-dir {UPX_DIR_PATH} --name {NAME} main.py"
+        f"python3 -m PyInstaller --noconfirm --icon fav.ico --clean --console --onefile --upx-dir {UPX_DIR_PATH} --name {NAME} main.py"
     )
     exe_folder = root_path / Path(f"dist/{NAME}.exe")
     print(f"Built in {exe_folder}")
