@@ -59,8 +59,12 @@ class FilmScraperVue:
             res = " ".join(res.split())
             return res.replace("(recommandé)", "")
 
-        choices_formated: list[Choice|Separator]= []
+        choices_formated: list[Choice|Separator] = []
         choices_formated += choices
+
+        if len(choices_formated) == 0:
+            choices_formated.append(Separator("Aucun film trouvé"))
+
         if additional_choices is not None:
             choices_formated += [
                 Separator(),
@@ -90,7 +94,10 @@ class FilmScraperVue:
 
             with self.spinner:
                 film_selectables = self.fs.get_films(search_prompt, search_depth)
-                film_choices = Selectable.parse_choices(film_selectables)
+
+                film_choices = []
+                if len(film_selectables) != 0:
+                    film_choices = Selectable.parse_choices(film_selectables)
 
                 additionnal_choices = [
                     Choice(name="Nouvelle recherche", value="search"),

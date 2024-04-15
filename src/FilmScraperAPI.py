@@ -31,17 +31,17 @@ class FilmScraperApi:
         tmp_folder.mkdir(parents=True, exist_ok=True)
         tmp_file = tmp_folder / Path(b64encode(url.encode()).decode() + ".html")
         if self.cache_responses and tmp_file.is_file():
-            with open(tmp_file, "r") as f:
+            with open(tmp_file, "r", encoding="utf-8") as f:
                 return BeautifulSoup(f.read(), "lxml")
-        
+
         default_timeout = 4 # seconds
         res = requests.get(url, timeout=default_timeout)
 
         if res.status_code != 200:
             raise ConnectionError()
-        
+
         if self.cache_responses:
-            with open(tmp_file, "w") as f:
+            with open(tmp_file, "w", encoding="utf-8") as f:
                 f.write(res.text)
 
         return BeautifulSoup(res.text, "lxml")
