@@ -1,11 +1,16 @@
 import requests
 from bs4 import BeautifulSoup
+from pathlib import Path
+from base64 import b64encode
 
 from .Entity.Result.DownloadResult import DownloadResult
 from .Entity.Result.ResolutionResult import ResolutionResult
 from .Entity.Result.SearchResult import SearchResult
 
 class FilmScraperApi:
+
+    cache_responses = True
+    """Used for debugging should be false on production."""
 
     resolutions_recommanded = ["HDLIGHT 1080p"]
     hosts_recommanded = ["1fichier", "Uptobox"]
@@ -21,13 +26,25 @@ class FilmScraperApi:
 
     def __get_soup(self, url: str):
         """Parse URL into BeautifulSoup obj."""
+
+        tmp_folder = Path("tmp/")
+        tmp_folder.mkdir(parents=True, exist_ok=True)
+        tmp_file = tmp_folder / Path(b64encode(url.encode()).decode() + ".html")
+        if self.cache_responses and tmp_file.is_file():
+            with open(tmp_file, "r") as f:
+                return BeautifulSoup(f.read(), "lxml")
+        
         default_timeout = 4 # seconds
         res = requests.get(url, timeout=default_timeout)
 
         if res.status_code != 200:
             raise ConnectionError()
+        
+        if self.cache_responses:
+            with open(tmp_file, "w") as f:
+                f.write(res.text)
 
-        return BeautifulSoup(res.text, 'lxml')
+        return BeautifulSoup(res.text, "lxml")
 
     def __get_wawacity_url(self):
         """Retrieve wawacity url."""
