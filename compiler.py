@@ -2,13 +2,15 @@ from pathlib import Path
 import os
 from shutil import rmtree
 
+# git filter-branch -f --tree-filter "rm -rf dist" HEAD
+
 if __name__ == "__main__":
 
-    # git filter-branch -f --tree-filter "rm -rf dist" HEAD
     NAME = "film-scraper"
 
     root_path = Path(__file__).parent
     os.chdir(root_path)
+
     # https://github.com/upx/upx/releases/tag/v4.2.3
     UPX_DIR_PATH = "UPX"
     os.system(
