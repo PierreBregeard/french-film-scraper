@@ -15,11 +15,11 @@ if __name__ == "__main__":
 
     is_windows = os.name == 'nt'
 
-    name = "film-scraper"
+    name = 'film-scraper'
     if is_windows:
         name += '.exe'
 
-    command = "python -m PyInstaller --noconfirm --icon fav.ico --clean --console --onefile --name {name} main.py"
+    command = f"python -m PyInstaller --noconfirm --icon fav.ico --clean --console --onefile --name {name} main.py"
     os.system(command)
 
     exe_folder = root_path / Path(f"dist/{name}")
