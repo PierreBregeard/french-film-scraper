@@ -16,8 +16,6 @@ class FilmScraperApi:
     resolutions_recommanded = ["HDLIGHT 1080p"]
     hosts_recommanded = ["1fichier", "Uptobox"]
 
-    film_search_history: dict[str, SearchResult] = {}
-
     def __init__(self):
         self.wawa_url = self.__get_wawacity_url()
         self.cache_responses = not Env.is_prod_env()
@@ -71,11 +69,6 @@ class FilmScraperApi:
 
         for search_url in search_urls:
 
-            search_result = self.film_search_history.get(search_url)
-            if search_result is not None:
-                yield search_result
-                continue
-
             search_soup = self.__get_soup(search_url)
 
             for film_block in search_soup.select(".wa-sub-block"):
@@ -110,7 +103,6 @@ class FilmScraperApi:
                     director.get_text()
                 )
 
-                self.film_search_history[search_url] = search_result
                 yield search_result
 
     def get_film_resolutions(self, film_page_url: str):
