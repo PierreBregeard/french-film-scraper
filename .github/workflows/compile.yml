@@ -35,7 +35,7 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git pull
-        git add bin
+        git add .
         git commit -m "Add compiled binaries (Ubuntu)"
         git push origin main
 
@@ -66,6 +66,6 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git pull
-        git add bin
+        git add .
         git commit -m "Add compiled binaries (Windows)"
         git push origin main
