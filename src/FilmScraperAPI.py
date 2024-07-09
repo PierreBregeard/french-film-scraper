@@ -1,12 +1,13 @@
 import requests
+import os
 from bs4 import BeautifulSoup
 from pathlib import Path
 from base64 import b64encode
+from dotenv import load_dotenv
 
 from .Entity.Result.DownloadResult import DownloadResult
 from .Entity.Result.ResolutionResult import ResolutionResult
 from .Entity.Result.SearchResult import SearchResult
-from .Env import Env
 
 class FilmScraperApi:
 
@@ -17,8 +18,10 @@ class FilmScraperApi:
     hosts_recommanded = ["1fichier", "Uptobox"]
 
     def __init__(self):
+        env_path = Path(".env.local" if Path(".env.local").is_file() else ".env")
+        load_dotenv(env_path, override=True)
         self.wawa_url = self.__get_wawacity_url()
-        self.cache_responses = not Env.is_prod_env()
+        self.cache_responses = os.getenv("APP_ENV") == "dev"
 
     def __get_url_from_film_id(self, film_id: str):
         """Get the url of the film with the id."""
