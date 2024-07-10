@@ -1,7 +1,6 @@
 import os
 
 from pathlib import Path
-from datetime import datetime
 
 if __name__ == "__main__":
 
@@ -23,6 +22,3 @@ if __name__ == "__main__":
 
     exe_folder = root_path / Path(f"dist/{name}")
     print(f"Built in {exe_folder}")
-
-    with open("version.txt", "w", encoding="utf-8") as f:
-        f.write(datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
