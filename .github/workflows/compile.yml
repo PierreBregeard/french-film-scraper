@@ -26,6 +26,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Creating version
+      run: |
+        date +"%Y-%m-%d %H-%M-%S" > version.txt
+
     - name: Compile the project
       run: |
         python compiler.py
@@ -34,12 +38,12 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git pull
         git add .
         git commit -m "Add compiled binaries (Ubuntu)"
         git push origin main
 
   build-windows:
+    needs: build-ubuntu
     runs-on: windows-latest
 
     steps:
@@ -57,6 +61,10 @@ jobs:
         pip install -r requirements.txt
         git clone --branch v4.2.4 --depth 1 https://github.com/upx/upx.git
 
+    - name: Pulling version
+      run: |
+        git pull
+
     - name: Compile the project
       run: |
         python compiler.py
@@ -65,7 +73,6 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git pull
         git add .
         git commit -m "Add compiled binaries (Windows)"
         git push origin main

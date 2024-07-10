@@ -46,6 +46,11 @@ class FilmScraperVue:
         print()
         self.center_text("© 2024 - πR")
         self.print_seperator()
+        is_program_up_to_date = self.fs.is_program_up_to_date()
+        if is_program_up_to_date is None:
+            self.center_text("Une erreur est survenue lors de la vérification de la version.")
+        elif not is_program_up_to_date:
+            self.center_text("Une nouvelle version de ce programme est disponible !")
 
     def select_item(
         self,

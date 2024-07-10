@@ -1,58 +1,24 @@
-import requests
-import os
-from bs4 import BeautifulSoup
-from pathlib import Path
-from base64 import b64encode
-from dotenv import load_dotenv
+from ..Entity.Result.DownloadResult import DownloadResult
+from ..Entity.Result.ResolutionResult import ResolutionResult
+from ..Entity.Result.SearchResult import SearchResult
+from .API import API
 
-from .Entity.Result.DownloadResult import DownloadResult
-from .Entity.Result.ResolutionResult import ResolutionResult
-from .Entity.Result.SearchResult import SearchResult
-
-class FilmScraperApi:
-
-    cache_responses = False
-    """Used for debugging should be false on production."""
+class FilmScraperApi(API):
 
     resolutions_recommanded = ["HDLIGHT 1080p"]
     hosts_recommanded = ["1fichier", "Uptobox"]
 
     def __init__(self):
-        env_path = Path(".env.local" if Path(".env.local").is_file() else ".env")
-        load_dotenv(env_path, override=True)
+        super().__init__()
         self.wawa_url = self.__get_wawacity_url()
-        self.cache_responses = os.getenv("APP_ENV") == "dev"
 
     def __get_url_from_film_id(self, film_id: str):
         """Get the url of the film with the id."""
         return f"{self.wawa_url}/{film_id}"
 
-    def __get_soup(self, url: str):
-        """Parse URL into BeautifulSoup obj."""
-
-        tmp_folder = Path("tmp/")
-        tmp_file = tmp_folder / Path(b64encode(url.encode()).decode() + ".html")
-        if self.cache_responses:
-            tmp_folder.mkdir(parents=True, exist_ok=True)
-            if tmp_file.is_file():
-                with open(tmp_file, "r", encoding="utf-8") as f:
-                    return BeautifulSoup(f.read(), "lxml")
-
-        default_timeout = 4 # seconds
-        res = requests.get(url, timeout=default_timeout)
-
-        if res.status_code != 200:
-            raise ConnectionError()
-
-        if self.cache_responses:
-            with open(tmp_file, "w", encoding="utf-8") as f:
-                f.write(res.text)
-
-        return BeautifulSoup(res.text, "lxml")
-
     def __get_wawacity_url(self):
         """Retrieve wawacity url."""
-        soup = self.__get_soup("https://t.me/s/Wawacity_officiel")
+        soup = self.get_soup("https://t.me/s/Wawacity_officiel")
         title = soup.select_one(".tgme_header_title > span:nth-child(1)")
         assert title is not None
         extension = title.get_text().split(".", 1)[-1]
@@ -72,7 +38,7 @@ class FilmScraperApi:
 
         for search_url in search_urls:
 
-            search_soup = self.__get_soup(search_url)
+            search_soup = self.get_soup(search_url)
 
             for film_block in search_soup.select(".wa-sub-block"):
 
@@ -125,7 +91,7 @@ class FilmScraperApi:
         def is_recommanded(resolution: str):
             return resolution in self.resolutions_recommanded
 
-        film_soup = self.__get_soup(film_page_url)
+        film_soup = self.get_soup(film_page_url)
 
         current_res = film_soup.select_one(
             "div.wa-sub-block:nth-child(3) > div:nth-child(1) > i:nth-child(2)"
@@ -159,7 +125,7 @@ class FilmScraperApi:
         def is_recommanded(host_name: str):
             return host_name in self.hosts_recommanded
 
-        film_soup = self.__get_soup(film_page_url)
+        film_soup = self.get_soup(film_page_url)
         for tr in film_soup.select("#DDLLinks > tbody:nth-child(1) > tr"):
             dl_name = tr.select_one("td:nth-child(2)")
             assert dl_name is not None
