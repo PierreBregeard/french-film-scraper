@@ -38,6 +38,7 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git checkout main
         git add .
         git commit -m "Add compiled binaries (Ubuntu)"
         git push origin main
@@ -63,6 +64,7 @@ jobs:
 
     - name: Pulling version
       run: |
+        git checkout main
         git pull
 
     - name: Compile the project
