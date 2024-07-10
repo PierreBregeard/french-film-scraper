@@ -16,7 +16,7 @@ if __name__ == "__main__":
     # https://github.com/upx/upx/releases/tag/v4.2.4
     command = f"python -m PyInstaller --noconfirm --clean --console --onefile --upx-dir upx --name {name} "
     command += "--icon fav.ico "
-    command += f"--add-data '.env'{';' if is_windows else ':'}'.env' "
+    command += f"--add-data .env{';' if is_windows else ':'}.env "
     command += "main.py"
     os.system(command)
 
